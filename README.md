@@ -1,6 +1,6 @@
 # LLM PR Review GitHub Action
 
-This GitHub Action automatically analyzes pull requests using an LLM (Large Language Model) and provides detailed feedback as a comment on the PR. The analysis includes a summary of changes, potential issues, suggestions for improvements, security concerns, and code quality observations.
+This GitHub Action automatically analyzes pull requests using an Gemini 2 Flash Thinking LLM (Large Language Model) and provides detailed feedback as a comment on the PR. The analysis includes a summary of changes, potential issues, suggestions for improvements, security concerns, and code quality observations.
 
 ## Features
 
@@ -92,7 +92,8 @@ jobs:
               )
               return completion.choices[0].message.content
           
-          from code2prompt.get_codebase import get_codebase
+          # Import get_codebase directly from code2prompt package
+          from code2prompt import get_codebase
           
           # Read the diff file
           with open('pr_diff.txt', 'r') as f:
@@ -228,6 +229,11 @@ You can customize the workflow by:
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+## Todo
+
+- Add support for Gemini API instead of just Portkey
+- Move prompt to environment variable
 
 ## License
 

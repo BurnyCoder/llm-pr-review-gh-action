@@ -53,7 +53,25 @@ jobs:
           cat > analyze_pr.py << 'EOFPY'
           import sys
           import os
-          from portkey import gemini2flashthinking
+          # Instead of importing from portkey, inline the necessary code
+          from portkey_ai import Portkey
+          
+          # Initialize Portkey client for Google
+          portkey_google = Portkey(
+              api_key=os.getenv("PORTKEY_API_KEY"),
+              virtual_key=os.getenv("PORTKEY_VIRTUAL_KEY_GOOGLE")
+          )
+          
+          # Inline the gemini2flashthinking function
+          def gemini2flashthinking(prompt):
+              """Wrapper function for Gemini 2 Flash Thinking"""
+              completion = portkey_google.chat.completions.create(
+                  messages=[{"role": "user", "content": prompt}],
+                  model="gemini-2.0-flash-thinking-exp-01-21",
+                  max_tokens=8192
+              )
+              return completion.choices[0].message.content
+          
           from code2prompt.get_codebase import get_codebase
           
           # Read the diff file

@@ -1,3 +1,2 @@
-PORTKEY_API_BASE="https://api.portkey.ai/v1"
 PORTKEY_API_KEY="your_api_key_here"
 PORTKEY_VIRTUAL_KEY_GOOGLE="your_virtual_key_here"

@@ -92,7 +92,8 @@ jobs:
               )
               return completion.choices[0].message.content
           
-          from code2prompt.get_codebase import get_codebase
+          # Import get_codebase directly from code2prompt package
+          from code2prompt import get_codebase
           
           # Read the diff file
           with open('pr_diff.txt', 'r') as f:

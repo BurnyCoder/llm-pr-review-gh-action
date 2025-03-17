@@ -53,7 +53,6 @@ jobs:
           cat > analyze_pr.py << 'EOFPY'
           import sys
           import os
-          # Instead of importing from portkey, inline the necessary code
           from portkey_ai import Portkey
           
           # Initialize Portkey client for Google

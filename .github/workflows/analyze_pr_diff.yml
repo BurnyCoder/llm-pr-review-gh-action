@@ -53,8 +53,8 @@ jobs:
           cat > analyze_pr.py << 'EOFPY'
           import sys
           import os
-          from src.backend.agents.implementations.utils.portkey import gemini2flashthinking
-          from src.backend.agents.implementations.utils.code2prompt.get_codebase import get_codebase
+          from portkey import gemini2flashthinking
+          from code2prompt.get_codebase import get_codebase
           
           # Read the diff file
           with open('pr_diff.txt', 'r') as f:

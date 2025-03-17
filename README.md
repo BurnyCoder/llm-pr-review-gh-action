@@ -234,6 +234,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 - Add support for Gemini API instead of just Portkey
 - Move prompt to environment variable
+- Support for more LLMs
 
 ## License
 

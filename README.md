@@ -229,6 +229,11 @@ You can customize the workflow by:
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
+## Todo
+
+- Add support for Gemini API instead of just Portkey
+- Move prompt to environment variable
+
 ## License
 
 [MIT](LICENSE) 

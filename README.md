@@ -1,6 +1,6 @@
 # LLM PR Review GitHub Action
 
-This GitHub Action automatically analyzes pull requests using an LLM (Large Language Model) and provides detailed feedback as a comment on the PR. The analysis includes a summary of changes, potential issues, suggestions for improvements, security concerns, and code quality observations.
+This GitHub Action automatically analyzes pull requests using an Gemini 2 Flash Thinking LLM (Large Language Model) and provides detailed feedback as a comment on the PR. The analysis includes a summary of changes, potential issues, suggestions for improvements, security concerns, and code quality observations.
 
 ## Features
 

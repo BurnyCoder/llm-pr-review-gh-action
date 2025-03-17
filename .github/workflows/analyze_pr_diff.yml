@@ -1,0 +1,139 @@
+name: Analyze PR Diff with LLM
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    # Optional: Uncomment below to only run on PRs targeting specific branches
+    # branches:
+    #   - main
+    #   - develop
+
+# Add permissions needed to comment on PRs
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  analyze-diff:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          
+      - name: Cache Python dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          
+      - name: Get PR diff
+        id: get-diff
+        run: |
+          # Get the PR diff and save it to a file
+          git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} > pr_diff.txt
+          echo "diff_size=$(stat -c%s pr_diff.txt)" >> $GITHUB_OUTPUT
+          
+      - name: Create Python analysis script
+        run: |
+          cat > analyze_pr.py << 'EOFPY'
+          import sys
+          import os
+          from src.backend.agents.implementations.utils.portkey import gemini2flashthinking
+          from src.backend.agents.implementations.utils.code2prompt.get_codebase import get_codebase
+          
+          # Read the diff file
+          with open('pr_diff.txt', 'r') as f:
+              diff_content = f.read()
+              
+          # Get the entire codebase
+          try:
+              print("Gathering codebase content...")
+              codebase_content = get_codebase(".")
+              print("Codebase content gathered successfully.")
+          except Exception as e:
+              print(f"Error gathering codebase: {str(e)}")
+              codebase_content = "Error: Could not retrieve codebase content."
+          
+          # Get environment variables for PR info
+          github_repo = os.environ.get('GITHUB_REPOSITORY', 'Unknown repository')
+          pr_number = os.environ.get('PR_NUMBER', 'Unknown PR')
+          pr_title = os.environ.get('PR_TITLE', 'Unknown title')
+          
+          # Prepare prompt for the LLM
+          prompt = f"""
+          Please analyze the following Git diff from a pull request and provide feedback.
+          You will be provided with both the diff and the entire codebase for context.
+          
+          Pull Request: {github_repo}/pull/{pr_number}
+          Title: {pr_title}
+          
+          DIFF:
+          ```
+          {diff_content}
+          ```
+          
+          CODEBASE:
+          {codebase_content}
+          
+          Please provide:
+          1. A summary of the changes
+          2. Potential issues or bugs you notice
+          3. Suggestions for improvements
+          4. Any security concerns
+          5. Code quality observations
+          
+          Consider how the changes fit into the existing codebase and if they maintain consistency with the existing code patterns.
+          """
+          
+          # Send to LLM and get analysis
+          print("Sending to LLM for analysis...")
+          analysis = gemini2flashthinking(prompt)
+          
+          # Print the analysis
+          print("\n--- LLM ANALYSIS OF PR DIFF ---\n")
+          print(analysis)
+          print("\n--- END OF ANALYSIS ---\n")
+          
+          # Save analysis to a file for GitHub comment creation
+          with open('llm_analysis.md', 'w') as f:
+              f.write(analysis)
+          EOFPY
+          
+      - name: Analyze diff with LLM
+        env:
+          PORTKEY_API_KEY: ${{ secrets.PORTKEY_API_KEY }}
+          PORTKEY_VIRTUAL_KEY_GOOGLE: ${{ secrets.PORTKEY_VIRTUAL_KEY_GOOGLE }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: python analyze_pr.py
+          
+      - name: Add LLM analysis as PR comment
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const analysis = fs.readFileSync('llm_analysis.md', 'utf8');
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## LLM Analysis of PR Changes\n\n${analysis}`
+            }) 
